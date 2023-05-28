@@ -1,0 +1,28 @@
+---
+- name: updating resolve.conf
+  hosts: all
+  become: true
+
+  tasks:
+    - name: creating temp file resolve.conf
+      tempfile:
+        state: file
+        suffix: .conf
+      register: resolve_conf
+
+    - name: copying template resolve.conf.j2 into temp file
+      template:
+        src: templates/resolve.conf.j2
+        dest: "{{ resolve_conf.path }}"
+      notify: Restarting network service
+
+    - name: Copying temporary file to resolve.conf
+      copy:
+        src: "{{ resolve_conf.path }}"
+        dest: /etc/resolve.conf
+
+  handlers:
+    - name: Restarting network service
+      service:
+        name: network
+        state: restarted
